@@ -24,9 +24,9 @@
             <% images.forEach(function(image) { %>
                 <li class="image-item">
                     <a href="/image/<%= image.filename %>"><%= image.originalname %></a>
-                    <button class="copy-btn" onclick="copyLink('<%= 'https://p.xym.one/image/' + image.filename %>')">Copy Link</button>
+                    <button class="copy-btn" onclick="copyLink('<%= process.env.BASE_URL + '/image/' + image.filename %>')">Copy Link</button>
                 </li>
-            <% }) %>
+            <% }) %>            
         </ul>
     </div>
 
