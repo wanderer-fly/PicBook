@@ -1,0 +1,11 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore .env file
+.env
+
+# Ignore image hosting database
+image-hosting.db
+
+# Ignore uploaded files directory
+public/uploads/

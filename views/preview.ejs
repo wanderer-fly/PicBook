@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Preview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Image Preview</h1>
+        <form action="/image/<%= filename %>" method="post">
+            <input type="password" name="password" placeholder="Enter password to view this image" required />
+            <button type="submit">View Image</button>
+        </form>
+    </div>
+</body>
+</html>

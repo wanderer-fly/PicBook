@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Upload</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Image</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <!-- Hidden input to trigger file selection -->
+            <input type="file" name="image" id="fileInput" class="custom-file-input" required />
+            <!-- Custom file input label -->
+            <label for="fileInput" class="custom-file-label">Choose File</label>
+            <!-- Password input -->
+            <input type="password" name="password" placeholder="Enter password for this image (optional)" />
+            <!-- Submit button -->
+            <button type="submit">Upload</button>
+        </form>
+
+        <h2>Uploaded Images</h2>
+        <ul>
+            <% images.forEach(function(image) { %>
+                <li class="image-item">
+                    <a href="/image/<%= image.filename %>"><%= image.originalname %></a>
+                    <button class="copy-btn" onclick="copyLink('<%= 'https://p.xym.one/image/' + image.filename %>')">Copy Link</button>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+
+    <!-- Notification element -->
+    <div id="notification" class="notification">Link copied to clipboard</div>
+
+    <script>
+        function copyLink(link) {
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = link;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showNotification();
+        }
+
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+
+        // Custom file input script
+        document.getElementById('fileInput').addEventListener('change', function() {
+            var fileName = this.files[0].name;
+            var nextSibling = this.nextElementSibling;
+            nextSibling.innerText = fileName;
+        });
+    </script>
+</body>
+</html>
