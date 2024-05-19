@@ -27,7 +27,7 @@
 1. 克隆存储库：
 
 ```
-git clone <repository-url>
+git clone https://github.com/wanderer-fly/ImageHosting.git
 ```
 
 
