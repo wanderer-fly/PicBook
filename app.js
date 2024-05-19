@@ -84,7 +84,7 @@ app.post('/image/:filename', (req, res) => {
         if (!row.password || (row.password && bcrypt.compareSync(password, row.password))) {
             res.sendFile(path.join(__dirname, 'public/uploads', filename))
         } else {
-            res.send('<script>alert("Incorrect password"); window.history.back();</script>')
+            res.send('<script>alert("Incorrect password") window.history.back()</script>')
         }
     })
 })
