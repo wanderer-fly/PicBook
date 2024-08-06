@@ -1,26 +1,45 @@
 require('dotenv').config()
+const fs = require('fs')
 const express = require('express')
 const multer = require('multer')
 const bcrypt = require('bcryptjs')
 const path = require('path')
 const db = require('./database')
+const { nanoid } = require('nanoid');
+
 
 const app = express()
-const PORT = process.env.PORT || 3801
+const PORT = process.env.PORT || 3000
 
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
-// 傻逼华为
-app.use((req, res, next) => {
-    const userAgent = req.headers['user-agent'].toLowerCase()
-    if (userAgent && (userAgent.includes('huawei') || userAgent.includes('harmony'))) {
-        return res.status(403).send('Access Forbidden for Huawei devices')
-    }
-    next()
-})
+if (!fs.existsSync(path.join(__dirname, 'public', 'uploads'))) {
+    // Create uploads if not exist
+    fs.mkdirSync(path.join(__dirname, 'public', 'uploads'), { recursive: true });
+    console.log('Directory created:', path.join(__dirname, 'public', 'uploads'));
+} else {
+    console.log('Directory already exists:', path.join(__dirname, 'public', 'uploads'));
+}
 
+// Middleware to check device
+function checkDevice(uaFilter) {
+    return (req, res, next) => {
+        const userAgent = req.headers['user-agent'].toLowerCase()
+        const filters = uaFilter.split(',')
+        for (let filter of filters) {
+            if (userAgent.includes(filter.split('|')[0].trim().toLowerCase()) && uaFilter != '') {
+                if(filter.split('|',2).length > 1) {
+                    return res.redirect(filter.split('|',2)[1])
+                }
+                return res.status(403).json({ error: 'Access denied for this device' })
+            }
+        }
+        next()
+    };
+}
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -46,7 +65,6 @@ app.get('/', (req, res) => {
 app.post('/upload', upload.single('image'), (req, res) => {
     const filename = req.file.filename
     const originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf-8')
-    console.log(req.file)
     const password = req.body.password || ''
     const hashedPassword = password ? bcrypt.hashSync(password, 10) : ''
 
@@ -90,7 +108,36 @@ app.post('/image/:filename', (req, res) => {
     })
 })
 
+app.post('/generate-short-url', (req, res) => {
+    const { longUrl, uaFilter } = req.body
+    const shortUrl = nanoid(7)
+    db.run(`INSERT INTO short_links (shortUrl, longUrl, uaFilter) VALUES (?, ?, ?)`, [shortUrl, longUrl, uaFilter], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' })
+        }
+        res.json({ shortUrl })
+    })
+})
 
+app.get('/s/:shortUrl', (req, res) => {
+    const { shortUrl } = req.params
+    db.get(`SELECT longUrl, uaFilter  FROM short_links WHERE shortUrl = ?`, [shortUrl], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' })
+        }
+        if (row) {
+            const { longUrl, uaFilter } = row
+            const middleware = checkDevice(uaFilter)
+            middleware(req, res, () => {
+                if (!res.headersSent) {
+                    res.redirect(longUrl)
+                }
+            })
+        } else {
+            res.status(404).json({ error: 'Short URL not found' })
+        }
+    })
+})
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`)

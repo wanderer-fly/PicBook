@@ -11,6 +11,13 @@ db.serialize(() => {
         originalname TEXT,
         password TEXT
     )`)
+    
+    db.run(`CREATE TABLE IF NOT EXISTS short_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shortUrl TEXT,
+        longUrl TEXT,
+        uaFilter TEXT
+    )`)
 })
 
 module.exports = db
