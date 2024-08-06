@@ -45,7 +45,8 @@ app.get('/', (req, res) => {
 
 app.post('/upload', upload.single('image'), (req, res) => {
     const filename = req.file.filename
-    const originalname = req.file.originalname
+    const originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf-8')
+    console.log(req.file)
     const password = req.body.password || ''
     const hashedPassword = password ? bcrypt.hashSync(password, 10) : ''
 
