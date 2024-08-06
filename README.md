@@ -66,6 +66,97 @@ npm start
    - 可选地为图片设置密码。
    - 单击“上传”按钮。
 
+## 作为服务运行
+
+```
+sudo vi /etc/systemd/system/picbook.conf
+```
+
+写入
+
+```
+[Unit]
+Description=PicBook Node.js App
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /opt/PicBook/app.js
+WorkingDirectory=/opt/PicBook
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=picbook
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启动服务
+
+```
+sudo systemctl daemon-reload
+sudo systemctl start picbook.service
+sudo systemctl enable picbook.service
+# 或者
+sudo systemctl enable --now picbook.service
+# 查看运行状态
+sudo systemctl status picbook.service
+```
+
 ## 部署
 
-建议配合反向代理使用，如Nginx
+建议配合反向代理使用，如Nginx：
+
+```
+sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/your-domain-name
+```
+
+```
+sudo vi /etc/nginx/sites-available/your-domain-name
+```
+
+```
+server {
+    listen 80;
+    server_name your_domain_name;
+
+    location / {
+        proxy_pass http://localhost:3801;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+```
+sudo nginx -t
+sudo nginx -s reload
+```
+
+## FAQ
+
+1. Nginx上传`413 Request Entity Too Large`报错
+
+因为 Nginx 配置中限制了上传文件的大小。
+
+```
+sudo vi /etc/nginx/nginx.conf
+```
+
+增加`client_max_body_size`指令： 在`http`，`server` 或`location`块中添加以下行来增加允许的最大请求体大小。例如，设置为 100MB：
+```
+http {
+    ...
+    client_max_body_size 100M;
+    ...
+}
+```
+
+
+```
+sudo nginx -s reload
+```
