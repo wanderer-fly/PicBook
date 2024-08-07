@@ -6,6 +6,28 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+
+    <header>
+        <% if (username) { %>
+            <span>Welcome, <%= username %>!</span>
+        <% } else { %>
+            <button id="loginBtn">Login</button>
+        <% } %>
+    </header>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <form id="loginForm">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
     <div class="container">
         <h1>Upload Image</h1>
         <form action="/upload" method="post" enctype="multipart/form-data">
@@ -43,36 +65,86 @@
     </div>
 
     <script>
-        function copyLink() {
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginBtn = document.getElementById('loginBtn')
+            const loginModal = document.getElementById('loginModal')
+            const closeBtn = document.getElementsByClassName('close')[0]
+            const loginForm = document.getElementById('loginForm')
+        
+            loginBtn.onclick = () => {
+                loginModal.style.display = 'block'
+            }
+        
+            closeBtn.onclick = () => {
+                loginModal.style.display = 'none'
+            }
+        
+            window.onclick = (event) => {
+                if (event.target == loginModal) {
+                    loginModal.style.display = 'none'
+                }
+            }
+        
+            loginForm.onsubmit = async (event) => {
+                event.preventDefault()
+                const formData = new FormData(loginForm)
+                const data = Object.fromEntries(formData.entries())
+            
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+            
+                if (response.ok) {
+                    const result = await response.json()
+                    alert(`Welcome, ${result.username}!`)
+                    loginModal.style.display = 'none'
+                    location.reload();
+                } else {
+                    alert('Login failed')
+                }
+            }
+        })
+
+        async function fetchLink(link, uaFilter) {
+            try {
+                const response = await fetch('/generate-short-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ longUrl: link, uaFilter: uaFilter })
+                });
+                const data = await response.json();
+                const shortLink = `<%= process.env.BASE_URL %>/s/${data.shortUrl}`;
+                document.getElementById('linkInput').value = shortLink;
+                return shortLink;
+            } catch (err) {
+                showNotification('Failed to generate link');
+                console.log(err);
+                throw err;
+            }
+        }
+        async function copyLink() {
             const link = document.getElementById('linkInput').value;
             const uaFilter = document.getElementById('uaFilter').value;
-
-            fetch('/generate-short-url', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ longUrl: link, uaFilter: uaFilter })
-            })
-            .then(res => res.json())
-            .then(data => {
-                const shortLink = `<%= process.env.BASE_URL %>/s/${data.shortUrl}`
-                navigator.clipboard.writeText(shortLink).then(function() {
-                    document.getElementById('linkInput').value = shortLink
-                    showNotification('Link copied to clipboard')
-                    setTimeout(() => {
-                        document.getElementById('shareWindow').style.display = 'none'
-                    }, 3000)
-                }, function(err) {
-                    showNotification('Failed to copy link')
-                    console.error('Could not copy text: ', err)
-                });
-            })
-            .catch(err => {
-                showNotification('Failed to generate link')
-                console.log(err);
-            });
+        
+            try {
+                const shortLink = await fetchLink(link, uaFilter);
+                const clipboardItem = new ClipboardItem({ 'text/plain': new Blob([shortLink], { type: 'text/plain' }) });
+            
+                await navigator.clipboard.write([clipboardItem]);
+                showNotification('Link copied to clipboard');
+            } catch (err) {
+                showNotification('Failed to copy link');
+                console.error('Could not copy text: ', err);
+            }
         }
+
 
         function showNotification(message) {
             const notification = document.getElementById('notification')

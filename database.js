@@ -9,6 +9,8 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT,
         originalname TEXT,
+        uploader TEXT,
+        upload_time DATE,
         password TEXT
     )`)
     
@@ -17,6 +19,12 @@ db.serialize(() => {
         shortUrl TEXT,
         longUrl TEXT,
         uaFilter TEXT
+    )`)
+
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        username TEXT,
+        password TEXT
     )`)
 })
 
