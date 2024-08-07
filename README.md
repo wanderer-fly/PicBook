@@ -46,6 +46,7 @@ npm install
 ```
 PORT=3000
 BASE_URL=http://localhost:3000
+SECRET_KEY=your_secret_key
 ```
 
 

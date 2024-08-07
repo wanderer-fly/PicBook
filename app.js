@@ -9,7 +9,7 @@ const path = require('path')
 const db = require('./database')
 const { nanoid } = require('nanoid')
 
-const secretKey = 'your_secret_key'
+const secretKey = process.env.SECRET_KEY || 'default'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -85,11 +85,22 @@ app.get('/', (req, res) => {
         })
     }
 
-    db.all("SELECT * FROM images", [], (err, rows) => {
+    res.render('index', { username: username })
+
+    // db.all("SELECT * FROM images", [], (err, rows) => {
+    //     if (err) {
+    //         throw err
+    //     }
+    //     res.render('index', { images: rows, username: username })
+    // })
+})
+
+app.get('/api/images', (req, res) => {
+    db.all('SELECT * FROM images', (err, images) => {
         if (err) {
-            throw err
+            return res.status(500).send('Database error')
         }
-        res.render('index', { images: rows, username })
+        res.json(images)
     })
 })
 
@@ -100,12 +111,25 @@ app.post('/api/login', (req, res) => {
             return res.status(500).send('Database error')
         }
         if (user) {
-            const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '24h' })
-            res.json({ token })
+            const token = jwt.sign({ username: user.username }, secretKey, { expiresIn: '24h' })
+            console.log(user.username)
+            res.cookie('token', token, { maxAge: 86400 * 1000 })
+            res.json({ token, username: user.username })
         } else {
             res.status(401).send('Invalid credentials')
         }
     })
+})
+
+app.get('/api/user', (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1]
+    // Verify the token and fetch user data
+    const user = verifyToken(token) // Implement this function to verify token and get user data
+    if (user) {
+        res.json({ username: user.username, custom_name: user.custom_name })
+    } else {
+        res.status(401).json({ error: 'Unauthorized' })
+    }
 })
 
 app.post('/upload', authenticateToken, upload.single('image'), (req, res) => {
@@ -116,7 +140,8 @@ app.post('/upload', authenticateToken, upload.single('image'), (req, res) => {
     const uploader = req.user.username
     const uploadTime = new Date().toISOString()
 
-    db.run("INSERT INTO images (filename, originalname, password) VALUES (?, ?, ?)", [filename, originalname, hashedPassword], function(err) {
+    db.run("INSERT INTO images (filename, originalname, password, uploader, upload_time) VALUES (?, ?, ?, ?, ?)",
+        [filename, originalname, hashedPassword, uploader, uploadTime], function(err) {
         if (err) {
             return res.send('Error storing image information.')
         }
@@ -151,7 +176,7 @@ app.post('/image/:filename', (req, res) => {
         if (!row.password || (row.password && bcrypt.compareSync(password, row.password))) {
             res.sendFile(path.join(__dirname, 'public/uploads', filename))
         } else {
-            res.send('<script>alert("Incorrect password"); window.history.back();</script>')
+            res.send('<script>showNotification("Incorrect password"); window.history.back();</script>')
         }
     })
 })
@@ -159,8 +184,7 @@ app.post('/image/:filename', (req, res) => {
 app.post('/generate-short-url', (req, res) => {
     const { longUrl, uaFilter } = req.body
     const shortUrl = nanoid(7)
-    db.run("INSERT INTO images (filename, originalname, password, uploader, upload_time) VALUES (?, ?, ?, ?, ?)",
-        [filename, originalname, hashedPassword, uploader, uploadTime],
+    db.run(`INSERT INTO short_links (shortUrl, longUrl, uaFilter) VALUES (?, ?, ?)`, [shortUrl, longUrl, uaFilter],
         function(err) {
         if (err) {
             return res.status(500).json({ error: 'Database error' })
