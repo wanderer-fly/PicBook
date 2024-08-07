@@ -4,6 +4,10 @@
 
 **特别注意此项目屏蔽华为，低配高价虚假宣传出问题别人背锅的手机不要在我面前跳**
 
+## TODO
+
+ - 程序运行时创建secret_key并更新
+
 ## 特点
 
 - 安全上传图片。
@@ -45,8 +49,10 @@ npm install
 
 ```
 PORT=3000
-BASE_URL=http://localhost:3000
+BASE_URL=http://your_url:3000
 SECRET_KEY=your_secret_key
+DEFAULT_USERNAME=admin
+DEFAULT_PASSWORD=password
 ```
 
 

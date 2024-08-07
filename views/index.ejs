@@ -14,7 +14,8 @@
             <button id="loginBtn">Login</button>
         <% } %>
     </header>
-
+    
+    <!-- Login window element -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -25,6 +26,18 @@
                 <input type="password" id="password" name="password" required>
                 <button type="submit">Login</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Share window element -->
+    <div id="shareWindow" class="modal" style="display: none;">
+        <div class="modal-content shareWindow" style="display: flex; flex-direction: column;">
+            <span class="close" id="closeShareWindow">&times;</span>
+            <h2>Share</h2>
+            <input type="text" id="linkInput">
+            <button onclick="copyLink()">Copy Link</button>
+            <span>Use simple syntax here to filter User-Agent <br>e.g. huawei,xiaomi,baidu|https://google.com</span>
+            <input type="text" id="uaFilter" style="width: 80%;">
         </div>
     </div>
 
@@ -50,16 +63,11 @@
     <!-- Notification element -->
     <div id="notification" class="notification"></div>
 
-    <!-- Share window element -->
-    <div id="shareWindow" class="shareWindow" style="display: none;">
-        <h2>Share</h2>
-        <input type="text" id="linkInput">
-        <button onclick="copyLink()">Copy Link</button>
-        <span>Use simple syntax here to filter User-Agent <br>e.g. huawei,xiaomi,baidu|https://google.com</span>
-        <input type="text" id="uaFilter" style="width: 80%;">
-    </div>
-
     <script>
+        document.getElementById('closeShareWindow').addEventListener('click', () => {
+            document.getElementById('shareWindow').style.display = 'none' // I'm just lazy to uniform the layout
+        })
+
         document.getElementById('uploadForm').addEventListener('submit', function(event){
             event.preventDefault()
 
@@ -82,6 +90,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const loginBtn = document.getElementById('loginBtn')
             const loginModal = document.getElementById('loginModal')
+            const shareModal = document.getElementById('shareWindow')
             const closeBtn = document.getElementsByClassName('close')[0]
             const loginForm = document.getElementById('loginForm')
         
@@ -120,7 +129,6 @@
                     console.log(data)
                     showNotification(`You are logged in as ${data.username}`)
                     loginModal.style.display = 'none'
-                    // document.getElementById('loginBtn').style.display = 'none'
                     document.getElementById('loginBtn').innerText = data.username
                 } else {
                     showNotification('Login failed')
