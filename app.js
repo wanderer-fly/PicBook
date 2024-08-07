@@ -111,7 +111,9 @@ app.post('/image/:filename', (req, res) => {
 app.post('/generate-short-url', (req, res) => {
     const { longUrl, uaFilter } = req.body
     const shortUrl = nanoid(7)
-    db.run(`INSERT INTO short_links (shortUrl, longUrl, uaFilter) VALUES (?, ?, ?)`, [shortUrl, longUrl, uaFilter], function(err) {
+    db.run("INSERT INTO images (filename, originalname, password, uploader, upload_time) VALUES (?, ?, ?, ?, ?)",
+        [filename, originalname, hashedPassword, uploader, uploadTime],
+        function(err) {
         if (err) {
             return res.status(500).json({ error: 'Database error' })
         }
