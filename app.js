@@ -87,12 +87,6 @@ app.get('/', (req, res) => {
 
     res.render('index', { username: username })
 
-    // db.all("SELECT * FROM images", [], (err, rows) => {
-    //     if (err) {
-    //         throw err
-    //     }
-    //     res.render('index', { images: rows, username: username })
-    // })
 })
 
 app.get('/api/images', (req, res) => {
@@ -112,7 +106,6 @@ app.post('/api/login', (req, res) => {
         }
         if (user) {
             const token = jwt.sign({ username: user.username }, secretKey, { expiresIn: '24h' })
-            console.log(user.username)
             res.cookie('token', token, { maxAge: 86400 * 1000 })
             res.json({ token, username: user.username })
         } else {

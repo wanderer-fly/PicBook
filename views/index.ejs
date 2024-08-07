@@ -196,23 +196,22 @@
             })
             .then(response => response.json())
             .then(images => {
-                console.log(1)
                 const imageList = document.getElementById('imageList')
                 imageList.innerHTML = ''
 
                 images.forEach(image => {
-                    const listItem = document.createElement('li');
-                    listItem.className = 'image-item';
+                    const listItem = document.createElement('li')
+                    listItem.className = 'image-item'
                     listItem.innerHTML = `
                         <a href="/image/${image.filename}">${image.originalname}</a>
                         <p>${image.uploader}</p>
                         <p>${new Date(image.upload_time).toLocaleString()}</p>
-                        <button class="copy-btn" onclick="showShareWindow('<%= process.env.BASE_URL %> + '/image/' + image.filename}')">Share</button>
-                    `;
-                    imageList.appendChild(listItem);
-                });
+                        <button class="copy-btn" onclick="showShareWindow('<%= process.env.BASE_URL %>' + '/image/' + \'${image.filename}\')">Share</button>
+                    `
+                    imageList.appendChild(listItem)
+                })
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => console.error('Error:', error))
         }
 
         // Custom file input script
