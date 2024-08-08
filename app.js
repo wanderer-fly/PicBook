@@ -142,6 +142,28 @@ app.post('/upload', authenticateToken, upload.single('image'), (req, res) => {
     })
 })
 
+app.post('/delete', authenticateToken, (req, res) => {
+    const filename = req.body.filename
+    const filePath = path.join(__dirname, 'public', 'uploads', filename)
+
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            console.error(`Failed to delete ${filename}:`, err)
+            return res.status(500).send('Failed to delete file')
+        }
+
+        db.run('DELETE FROM images WHERE filename = ?', [filename], function(err) {
+            if (err) {
+                console.error(`Failed to delete record for ${filename}:`, err)
+                return res.status(500).send('Failed to delete record')
+            }
+
+            res.redirect('/')
+        })
+    })
+
+})
+
 app.get('/image/:filename', (req, res) => {
     const filename = req.params.filename
 

@@ -31,6 +31,13 @@
         </div>
     </div>
 
+    <!-- Delete window element -->
+     <div id="deleteWindow">
+        <h3>Are you sure you wanna delete this?</h3><br>
+        <button id="del_yes">Yes</button><br>
+        <button id="del_no">No</button><br>
+    </div>
+
     <!-- Share window element -->
     <div id="shareWindow" class="modal" style="display: none;">
         <div class="modal-content shareWindow" style="display: flex; flex-direction: column;">
@@ -200,6 +207,43 @@
             document.getElementById('linkInput').value = link
         }
 
+        function showDeleteWindow(filename) {
+            const del_yes = document.getElementById('del_yes')
+            const del_no = document.getElementById('del_no')
+            const deleteWindow = document.getElementById('deleteWindow')
+
+            deleteWindow.style.display = 'flex'
+
+            del_yes.addEventListener('click', () => {
+                fetch('/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': localStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ filename: filename })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showNotification(`Deleted ${filename}`)
+                        refreshImageList()
+                    } else {
+                        showNotification('Failed to delete file')
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error)
+                })
+                deleteWindow.style.display = 'none'
+            })
+        
+            del_no.addEventListener('click', () => {
+                showNotification('Delete canceled')
+                deleteWindow.style.display = 'none'
+            })
+        }
+
+
         function refreshImageList() {
             fetch('/api/images', {
                 method: 'GET',
@@ -214,10 +258,15 @@
                     listItem.className = 'image-item'
                     listItem.innerHTML = `
                         <a href="/image/${image.filename}">${image.originalname}</a>
-                        <p>${image.uploader}</p>
-                        <p>${new Date(image.upload_time).toLocaleString()}</p>
+                        <p class="uploader">${image.uploader}</p>
+                        <p class="upload-time">${new Date(image.upload_time).toLocaleString()}</p>
                         <button class="copy-btn" onclick="showShareWindow('<%= process.env.BASE_URL %>' + '/image/' + \'${image.filename}\')">Share</button>
                     `
+                    if (localStorage.getItem('token')) {
+                        listItem.innerHTML += `
+                            <button class="del-btn" onclick="showDeleteWindow('${image.filename}')">Delete</button>
+                        `
+                    }
                     imageList.appendChild(listItem)
                 })
             })
